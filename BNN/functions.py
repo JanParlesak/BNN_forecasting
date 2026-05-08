@@ -1,4 +1,16 @@
-from imports import *
+import numpy as np
+import torch
+from torch.utils.data.dataset import Dataset
+import matplotlib.pyplot as plt
+import scipy
+import scipy.stats as stats
+from sklearn.metrics import auc
+import pyro
+from pyro.infer import SVI, Trace_ELBO, Predictive, MCMC, NUTS
+from pyro.infer.autoguide import AutoDiagonalNormal
+from collections import defaultdict
+
+from tqdm.auto import trange
 
 
 def split_sequences(sequences, n_steps):
@@ -10,15 +22,15 @@ def split_sequences(sequences, n_steps):
     Returns: n_steps of the series as input value and a single label y
   """
 
-    X, y = list(), list()
-    for i in range(len(sequences)):
-        end_ix = i + n_steps
-        if end_ix >= len(sequences):
-            break
-        seq_x, seq_y = sequences[i:end_ix], sequences[end_ix]
-        X.append(seq_x)
-        y.append(seq_y)
-    return np.array(X), np.array(y)
+  X, y = list(), list()
+  for i in range(len(sequences)):
+      end_ix = i + n_steps
+      if end_ix >= len(sequences):
+          break
+      seq_x, seq_y = sequences[i:end_ix], sequences[end_ix]
+      X.append(seq_x)
+      y.append(seq_y)
+  return np.array(X), np.array(y)
 
 
 def multi_time(data, n_input, n_out):
@@ -103,6 +115,7 @@ def plot_results(inputs, test_y, prediction, plus_error, minus_error, title = No
 
 
 def rmse(test_data, prediction):
+    
 
     """
     Parameters: 
@@ -112,9 +125,8 @@ def rmse(test_data, prediction):
     Returns: 
       RMSE
   """
-  
-  mse = ((test_data - prediction)**2).sum()/len(prediction)
-  return round(np.sqrt(mse), 3)
+    mse = ((test_data - prediction)**2).sum()/len(prediction)
+    return round(np.sqrt(mse), 3)
 
 def mape(test_data, prediction):
 
@@ -203,13 +215,13 @@ def return_auc_curve(prediction, test_y, covariance_matrix):
 
     Returns: the calibration curve
     """
-  nssr = [(prediction[i] - test_y[i]) @  (np.linalg.inv(covariance_matrix[i])) @ (prediction[i] - test_y[i]).T for i in range(len(covariance_matrix))]
-  predicted_probability = chi_square_cdf_probabilities(nssr)
-  observed_probability = [count_elements_bigger_than_p(nssr,p)/len(nssr) for p in nssr]
-  p_array = np.column_stack((predicted_probability.squeeze(), observed_probability))
-  curve = np.row_stack(([0,0],(p_array[p_array[:, 0].argsort()])))
+    nssr = [(prediction[i] - test_y[i]) @  (np.linalg.inv(covariance_matrix[i])) @ (prediction[i] - test_y[i]).T for i in range(len(covariance_matrix))]
+    predicted_probability = chi_square_cdf_probabilities(nssr)
+    observed_probability = [count_elements_bigger_than_p(nssr,p)/len(nssr) for p in nssr]
+    p_array = np.column_stack((predicted_probability.squeeze(), observed_probability))
+    curve = np.row_stack(([0,0],(p_array[p_array[:, 0].argsort()])))
 
-  return curve
+    return curve
 
 def distance(prediction, test_y, covariance_matrix):
 
@@ -223,12 +235,12 @@ def distance(prediction, test_y, covariance_matrix):
 
     """
 
-  nssr = [(prediction[i] - test_y[i]) @  (np.linalg.inv(covariance_matrix[i])) @ (prediction[i] - test_y[i]).T for i in range(len(covariance_matrix))]
-  predicted_probability = chi_square_cdf_probabilities(nssr)
-  observed_probability = [count_elements_bigger_than_p(nssr,p)/len(nssr) for p in nssr]
-  p_array = np.column_stack((predicted_probability, observed_probability))
-  curve = np.row_stack(([0,0],(p_array[p_array[:, 0].argsort()])))
-  return round(np.sqrt(auc(curve[:,0],(curve[:,1]-curve[:,0])**2)),3), round(auc(curve[:,0],curve[:,1]))
+    nssr = [(prediction[i] - test_y[i]) @  (np.linalg.inv(covariance_matrix[i])) @ (prediction[i] - test_y[i]).T for i in range(len(covariance_matrix))]
+    predicted_probability = chi_square_cdf_probabilities(nssr)
+    observed_probability = [count_elements_bigger_than_p(nssr,p)/len(nssr) for p in nssr]
+    p_array = np.column_stack((predicted_probability, observed_probability))
+    curve = np.row_stack(([0,0],(p_array[p_array[:, 0].argsort()])))
+    return round(np.sqrt(auc(curve[:,0],(curve[:,1]-curve[:,0])**2)),3), round(auc(curve[:,0],curve[:,1]))
 
 def fit_svi(model, guide, train_loader, model_name, lr=0.01, num_epochs=1000, plot=True):
 
@@ -293,21 +305,21 @@ def fit_svi(model, guide, train_loader, model_name, lr=0.01, num_epochs=1000, pl
         plt.tight_layout()
 
 def predict(model, guide, test_loader, num_samples = 500):
-
- """
-    Parameters:
-      model: a Baysian Neural Network
-      guide: the guide for the Network
-      test_loader: the test data as a PyTorch dataloader
-      num_samples: number of samples to draw
-    
-    Returns:
-      pred: prediction on the test data
-      plus_error: vector of mean + 2 * standard deviation
-      minus_error: vector of mean - 2 * standard deviation
-      covariance: covariance matrix
-      real: the test data values
+  
   """
+      Parameters:
+        model: a Bayesian Neural Network
+        guide: the guide for the Network
+        test_loader: the test data as a PyTorch dataloader
+        num_samples: number of samples to draw
+      
+      Returns:
+        pred: prediction on the test data
+        plus_error: vector of mean + 2 * standard deviation
+        minus_error: vector of mean - 2 * standard deviation
+        covariance: covariance matrix
+        real: the test data values
+    """
 
 
   predictive = Predictive(model, guide = guide, num_samples = num_samples)
@@ -335,7 +347,8 @@ def predict(model, guide, test_loader, num_samples = 500):
 
   return pred, plus_error, minus_error, covariance, real
 
-def predict_mcmc(model, x_train, y_rain, x_test, num_samples = 50):
+def predict_mcmc(model, x_train, y_train, x_test, num_samples = 50):
+   
 
    """
     Parameters:
@@ -350,27 +363,27 @@ def predict_mcmc(model, x_train, y_rain, x_test, num_samples = 50):
       plus_error_mcmc: vector of mean + 2 * standard deviation
       minus_error_mcmc: vector of mean - 2 * standard deviation
       covariance_mcmc: covariance matrix
-  """
+   """
 
 
-  pyro.clear_param_store()
+   pyro.clear_param_store()
 
-  # define MCMC sampler
-  nuts_kernel = NUTS(model, jit_compile=False)
-  mcmc = MCMC(nuts_kernel, num_samples= num_samples)
-  mcmc.run(x_train, y_train)
-
-
-  predictive = Predictive(model = model, posterior_samples = mcmc.get_samples())
-  preds_mcmc = predictive(x_test)
-  residuals = preds_mcmc['obs'] - preds_mcmc['obs'].mean(dim=0)
-  covariance_mcmc = (torch.transpose(residuals, 1,2) @ residuals)/(num_samples - 1)
+   # define MCMC sampler
+   nuts_kernel = NUTS(model, jit_compile=False)
+   mcmc = MCMC(nuts_kernel, num_samples= num_samples)
+   mcmc.run(x_train, y_train)
 
 
-  minus_error_mcmc= (preds_mcmc['obs'].mean(dim=0)-2*preds_mcmc['obs'].std(dim=0)).numpy().flatten()
-  plus_error_mcmc= (preds_mcmc['obs'].mean(dim=0)+2*preds_mcmc['obs'].std(dim=0)).numpy().flatten()
+   predictive = Predictive(model = model, posterior_samples = mcmc.get_samples())
+   preds_mcmc = predictive(x_test)
+   residuals = preds_mcmc['obs'] - preds_mcmc['obs'].mean(dim=0)
+   covariance_mcmc = (torch.transpose(residuals, 1,2) @ residuals)/(num_samples - 1)
 
-  return preds_mcmc['obs'].mean(dim=0), plus_error_mcmc, minus_error_mcmc, covariance_mcmc
+
+   minus_error_mcmc= (preds_mcmc['obs'].mean(dim=0)-2*preds_mcmc['obs'].std(dim=0)).numpy().flatten()
+   plus_error_mcmc= (preds_mcmc['obs'].mean(dim=0)+2*preds_mcmc['obs'].std(dim=0)).numpy().flatten()
+
+   return preds_mcmc['obs'].mean(dim=0), plus_error_mcmc, minus_error_mcmc, covariance_mcmc
 
 
 
@@ -436,7 +449,7 @@ def prediction(bnn_model, n_inputs, x_train, x_test, y_train, y_test, method = '
 
     if plots == True:
 
-      plot_results(n_inputs, test_y, preds_mcmc, plus_error_mcmc, minus_error_mcmc, title = 'BNN Model (MCMC) ', x_train = x_train)
+      plot_results(n_inputs, y_test, preds_mcmc, plus_error_mcmc, minus_error_mcmc, title = 'BNN Model (MCMC) ', x_train = x_train)
 
     rmse_pred = rmse(y_test.flatten().numpy(),np.concatenate(preds_mcmc, axis =0))
     mape_pred = mape(y_test.flatten().numpy(),np.concatenate(preds_mcmc, axis =0))

@@ -1,3 +1,9 @@
+import pyro
+from pyro.nn import PyroModule, PyroSample
+import pyro.distributions as dist
+import torch
+import torch.nn as nn
+
 class BNN_onestep_cnn(PyroModule):
     def __init__(self):
         super().__init__()
