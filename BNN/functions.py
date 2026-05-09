@@ -459,6 +459,31 @@ def prediction(bnn_model, n_inputs, x_train, x_test, y_train, y_test, method = '
     return preds_mcmc, plus_error_mcmc, minus_error, rmse_pred, mape_pred, mae_pred, dist, auc
 
 
+def multi_append(prediction, truth, plus_error, minus_error, covariance):
+
+  prediction_list = []
+  truth_list = []
+  plus_error_list = []
+  minus_error_list = []
+  covariance_list = []
+
+  for i in range(len(prediction)):
+      if i==(len(prediction)-1):
+          for j in range(len(prediction[i])):
+              prediction_list.append(prediction[i][j])
+              truth_list.append(truth[i][0][j].numpy())
+              plus_error_list.append(plus_error[i][j])
+              minus_error_list.append(minus_error[i][j])
+              covariance_list.append(covariance[i][j])
+      else:
+          prediction_list.append(prediction[i][0])
+          truth_list.append(truth[i][0][0].numpy())
+          plus_error_list.append(plus_error[i][0])
+          minus_error_list.append(minus_error[i][0])
+          covariance_list.append(covariance[i][0])
+
+  return prediction_list, truth_list, plus_error_list, minus_error_list
+
 
 
 
