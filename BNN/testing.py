@@ -1,6 +1,6 @@
 from functions import *
 from models import *
-from data_processing import data, test_data
+# from data_processing import data, test_data
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(device)
