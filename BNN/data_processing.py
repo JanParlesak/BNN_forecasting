@@ -15,7 +15,7 @@ def download_finance_data(ticker, start, end, interval):
     test_data = data
     train_data = data[:-40]
 
-    data_list.append(data)
+    data_list.append(train_data)
     data_test_list.append(test_data)
     data_test_set = np.concatenate(data_test_list, axis=0)
     dataset = np.concatenate(data_list, axis=0)
