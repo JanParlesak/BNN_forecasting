@@ -376,8 +376,8 @@ def predict_mcmc(model, x_train, y_train, x_test, num_samples = 50):
 
    predictive = Predictive(model = model, posterior_samples = mcmc.get_samples())
    preds_mcmc = predictive(x_test)
-   y_pred = preds_mcmc['obs'].mean(dim=0).numpy()
-   residuals = preds_mcmc['obs'].numpy() - y_pred
+   y_pred = preds_mcmc['obs'].mean(dim=0)
+   residuals = preds_mcmc['obs'] - y_pred
    covariance_mcmc = [(residuals[:, i, :].T @ residuals[:, i, :]) / num_samples for i in range(len(y_pred))]
    
    minus_error_mcmc= (preds_mcmc['obs'].mean(dim=0)-2*preds_mcmc['obs'].std(dim=0)).numpy().flatten()
