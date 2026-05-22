@@ -383,7 +383,7 @@ def predict_mcmc(model, x_train, y_train, x_test, num_samples = 50):
    minus_error_mcmc= (preds_mcmc['obs'].mean(dim=0)-2*preds_mcmc['obs'].std(dim=0)).numpy().flatten()
    plus_error_mcmc= (preds_mcmc['obs'].mean(dim=0)+2*preds_mcmc['obs'].std(dim=0)).numpy().flatten()
 
-   return preds_mcmc['obs'].mean(dim=0), plus_error_mcmc, minus_error_mcmc, covariance_mcmc
+   return y_pred, plus_error_mcmc, minus_error_mcmc, covariance_mcmc
 
 
 
