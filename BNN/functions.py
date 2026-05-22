@@ -195,7 +195,7 @@ def auc_curve(prediction, test_y, covariance_matrix, title):
 
   """
 
-  nssr = [(prediction[i] - test_y[i]) @  (np.linalg.inv(covariance_matrix[i])) @ (prediction[i] - test_y[i]).T for i in range(len(covariance_matrix))]
+  nssr = [(prediction[i] - test_y[i]) @  (np.linalg.inv(covariance_matrix[i])) @ (prediction[i] - test_y[i]).T for i in range(len(prediction))]
   predicted_probability = chi_square_cdf_probabilities(nssr)
   observed_probability = [count_elements_bigger_than_p(nssr,p)/len(nssr) for p in nssr]
   p_array = np.column_stack((predicted_probability.squeeze(), observed_probability))
@@ -376,10 +376,10 @@ def predict_mcmc(model, x_train, y_train, x_test, num_samples = 50):
 
    predictive = Predictive(model = model, posterior_samples = mcmc.get_samples())
    preds_mcmc = predictive(x_test)
-   residuals = preds_mcmc['obs'] - preds_mcmc['obs'].mean(dim=0)
-   covariance_mcmc = (torch.transpose(residuals, 1,2) @ residuals)/(num_samples - 1)
-
-
+   y_pred = preds_mcmc['obs'].mean(dim=0).numpy()
+   residuals = preds_mcmc['obs'].numpy() - y_pred
+   covariance_mcmc = [(residuals[:, i, :].T @ residuals[:, i, :]) / num_samples for i in range(len(y_pred))]
+   
    minus_error_mcmc= (preds_mcmc['obs'].mean(dim=0)-2*preds_mcmc['obs'].std(dim=0)).numpy().flatten()
    plus_error_mcmc= (preds_mcmc['obs'].mean(dim=0)+2*preds_mcmc['obs'].std(dim=0)).numpy().flatten()
 
