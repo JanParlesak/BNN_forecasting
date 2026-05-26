@@ -15,7 +15,7 @@ The data used is the stock index of the S&P 500 GSCI, which is one of the most w
 
 ## Results
 
-- For an example walkthrough please see: [BNN_forecasting](https://github.com/JanParlesak/Bayes_NAIM/blob/main/notebooks/Train_BNAIM_ICU.ipynb).
+- For an example walkthrough please see: [BNN_forecasting](https://github.com/JanParlesak/BNN_forecasting/blob/main/Notebooks/BNN_forecasting.ipynb).
 
 For training we us [Pyro](https://github.com/pyro-ppl/pyro), which is a PPL build on Python. We utilize BNNs in single-step-ahead as well as multi-step ahead stock-price forecasting. CNN- and MLP-BNN architectures are trained for the one- and three-step ahead prediction case.  Training is done with Stochastic Variational Inference (SVI). Additionally, the linear models are then also trained with MCMC (utilizing the NUTS-algorithm) for comparison.
 
